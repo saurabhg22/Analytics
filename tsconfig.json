@@ -5,7 +5,7 @@
         "module": "commonjs",
         "noUnusedLocals": false,
         "noUnusedParameters": false,
-        "outDir": "server",
+        "outDir": "dist",
         "sourceMap": true,
         "noImplicitAny": false,
         "esModuleInterop": true,
