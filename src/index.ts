@@ -40,8 +40,6 @@ export const init = async (server, config?: { MONGO_URI?: string }) => {
 const setUpSocket = async (server) => {
     const io = SocketIO(server);
     io.sockets.on('connection', async (client) => {
-        console.log('server:connected');
-        client.emit('abc');
         try {
             const handshake: any = client.handshake || {};
             const headers = handshake.headers || {};
@@ -94,7 +92,6 @@ const setUpSocket = async (server) => {
                 },
             });
         });
-        console.log('server:returning');
     });
 };
 

@@ -11,5 +11,5 @@
         "esModuleInterop": true,
         "resolveJsonModule": true
     },
-    "include": ["src/**/*.ts","src/*.ts", "src/*.json", "src/**/*.json"]
+    "include": ["src/**/*.ts", "src/*.ts", "src/*.json", "src/**/*.json"]
 }

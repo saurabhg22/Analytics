@@ -1,10 +1,13 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import express from 'express';
+import { Server } from 'mongodb';
 import io from 'socket.io-client';
 import { init, createEvent, getMongoClient } from '../src/index';
 
 const should = chai.should();
+
+let server;
 chai.use(chaiAsPromised);
 before(async () => {
     const app = express();
@@ -13,7 +16,7 @@ before(async () => {
         res.send('hello world');
     });
 
-    const server = app.listen(3000);
+    server = app.listen(3000);
 
     await init(server, {
         MONGO_URI: 'mongodb://localhost:27017/eventtoollocal',
@@ -30,7 +33,6 @@ describe('socket', function () {
     let socket;
 
     beforeEach(function (done) {
-        // Setup
         socket = io.connect('http://localhost:3000', {
             reconnection: false,
         });
@@ -43,16 +45,13 @@ describe('socket', function () {
             console.log('disconnected...');
         });
     });
-
+    it('should communicate', (done) => {
+        done();
+    });
     afterEach((done) => {
-        // Cleanup
         if (socket.connected) {
             socket.disconnect();
         }
-        done();
-    });
-
-    it('should communicate', (done) => {
         done();
     });
 });
@@ -68,5 +67,6 @@ describe('socket', function () {
 
 after(async () => {
     const mongoClient = await getMongoClient();
+    server.close();
     return mongoClient.close();
 });
