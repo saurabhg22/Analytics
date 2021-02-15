@@ -21,8 +21,8 @@ export type TEvent = {
     };
 };
 export const init = async (
-    server,
-    config?: { MONGO_URI?: string }
+    config?: { MONGO_URI?: string; setupSocket?: boolean },
+    server?
 ): Promise<Db> => {
     const MONGO_URI = config?.MONGO_URI ?? process.env.MONGO_URI;
     await new Promise<void>((resolve, reject) => {
@@ -41,7 +41,9 @@ export const init = async (
             }
         );
     });
-    await setUpSocket(server);
+    if (server && config?.setupSocket) {
+        await setUpSocket(server);
+    }
     return db;
 };
 
@@ -71,7 +73,7 @@ const setUpSocket = async (server) => {
             const headers = handshake.headers || {};
             await createEvent(event.name, {
                 clientId: client.id,
-                sentTime: handshake.time ? new Date(handshake.time) : undefined,
+                sentTime: event.sentTime ? new Date(event.sentTime) : undefined,
                 receivedTime: new Date(),
                 context: {
                     'user-agent': headers['user-agent'],
@@ -89,9 +91,23 @@ const setUpSocket = async (server) => {
         client.on('disconnect', async () => {
             const handshake: any = client.handshake || {};
             const headers = handshake.headers || {};
-            await createEvent('socket-disconnected', {
+            const lastClientEvent = (
+                await db
+                    .collection('AnalyticEvent')
+                    .find({
+                        clientId: client.id,
+                    })
+                    .sort({ created: -1 })
+                    .limit(1)
+                    .toArray()
+            )[0];
+            if (lastClientEvent) {
+                delete lastClientEvent._id;
+            }
+
+            const disconnectEvent = {
+                ...(lastClientEvent || {}),
                 clientId: client.id,
-                sentTime: handshake.time ? new Date(handshake.time) : undefined,
                 receivedTime: new Date(),
                 context: {
                     'user-agent': headers['user-agent'],
@@ -99,7 +115,8 @@ const setUpSocket = async (server) => {
                     origin: headers.origin,
                     locale: headers.locale,
                 },
-            });
+            };
+            await createEvent('socket-disconnected', disconnectEvent);
         });
     });
 };
@@ -133,9 +150,11 @@ export const createEvent = async (
         return Promise.reject('name is required');
     }
     const db = await getDB();
+
+    delete (event as any)._id;
     const insertAck = await db.collection('AnalyticEvent').insertOne({
-        name,
         ...event,
+        name,
         created: new Date(),
     });
     return insertAck.insertedId;
