@@ -20,21 +20,29 @@ export type TEvent = {
         ip?: string;
     };
 };
-export const init = async (server, config?: { MONGO_URI?: string }) => {
+export const init = async (
+    server,
+    config?: { MONGO_URI?: string }
+): Promise<Db> => {
     const MONGO_URI = config?.MONGO_URI ?? process.env.MONGO_URI;
     await new Promise<void>((resolve, reject) => {
-        MongoClient.connect(MONGO_URI, function (err, client) {
-            if (err) {
-                return reject(err);
-            }
-            console.info(`Analytics successfully to ${MONGO_URI}`);
+        MongoClient.connect(
+            MONGO_URI,
+            { useUnifiedTopology: true },
+            function (err, client) {
+                if (err) {
+                    return reject(err);
+                }
+                console.info(`Analytics successfully to ${MONGO_URI}`);
 
-            mongoClient = client;
-            db = client.db();
-            return resolve();
-        });
+                mongoClient = client;
+                db = client.db();
+                return resolve();
+            }
+        );
     });
     await setUpSocket(server);
+    return db;
 };
 
 const setUpSocket = async (server) => {
@@ -61,7 +69,7 @@ const setUpSocket = async (server) => {
         client.on('createEvent', async (event: Partial<TEvent>) => {
             const handshake: any = client.handshake || {};
             const headers = handshake.headers || {};
-            createEvent(event.name, {
+            await createEvent(event.name, {
                 clientId: client.id,
                 sentTime: handshake.time ? new Date(handshake.time) : undefined,
                 receivedTime: new Date(),
@@ -75,12 +83,13 @@ const setUpSocket = async (server) => {
                 data: event.data,
                 page: event.page,
             });
+            console.log("returning from server")
         });
 
         client.on('disconnect', async () => {
             const handshake: any = client.handshake || {};
             const headers = handshake.headers || {};
-            createEvent('socket-disconnected', {
+            await createEvent('socket-disconnected', {
                 clientId: client.id,
                 sentTime: handshake.time ? new Date(handshake.time) : undefined,
                 receivedTime: new Date(),
@@ -124,7 +133,7 @@ export const createEvent = async (
         return Promise.reject('name is required');
     }
     const db = await getDB();
-    db.collection('Analytics').insertOne({
+    db.collection('AnalyticEvent').insertOne({
         name,
         ...event,
         created: new Date(),

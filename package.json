@@ -4,7 +4,7 @@
     "description": "",
     "main": "dist/index.js",
     "scripts": {
-        "test": "export NODE_ENV=testing; mocha -r ts-node/register __test__/**/*.spec.ts --timeout=10000",
+        "test": "export NODE_ENV=testing; mocha -r ts-node/register __test__/**/*.spec.ts --timeout=20000",
         "watch": "./node_modules/typescript/bin/tsc --watch",
         "build": "./node_modules/typescript/bin/tsc",
         "clean:build": "rm -rf dist && npm run build"

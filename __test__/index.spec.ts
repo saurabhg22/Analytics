@@ -1,54 +1,49 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import express from 'express';
-import { Server } from 'mongodb';
 import io from 'socket.io-client';
 import { init, createEvent, getMongoClient } from '../src/index';
 
-const should = chai.should();
-
-let server;
 chai.use(chaiAsPromised);
+const expect = chai.expect;
+
+let server, db;
 before(async () => {
     const app = express();
 
-    app.get('/', function (req, res) {
-        res.send('hello world');
-    });
-
     server = app.listen(3000);
 
-    await init(server, {
+    db = await init(server, {
         MONGO_URI: 'mongodb://localhost:27017/eventtoollocal',
     });
 });
 
 describe('createEvent', function () {
     it('should pass', async () => {
-        return createEvent('testevent', {}).should.be.fulfilled;
+        return expect(createEvent('testevent', {})).to.be.fulfilled;
     });
 });
 
-describe('socket', function () {
+describe('socket', () => {
     let socket;
 
-    beforeEach(function (done) {
+    beforeEach((done) => {
         socket = io.connect('http://localhost:3000', {
             reconnection: false,
         });
-
-        socket.on('connect', () => {
+        socket.on('connect', async () => {
             done();
         });
+    });
 
-        socket.on('disconnect', () => {
-            console.log('disconnected...');
+    it(`should create event 'socketEvent'`, (done) => {
+        socket.emit('createEvent', { name: 'socketEvent', data: { email: "test@email.com" } }, () => {
+            done();
         });
     });
-    it('should communicate', (done) => {
-        done();
-    });
+
     afterEach((done) => {
+        console.log('afterEach');
         if (socket.connected) {
             socket.disconnect();
         }
