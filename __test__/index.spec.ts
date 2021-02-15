@@ -139,6 +139,7 @@ describe('socket events', () => {
 
 after(async () => {
     const mongoClient = await getMongoClient();
+    await wait(500);
     server.close();
     return mongoClient.close();
 });
