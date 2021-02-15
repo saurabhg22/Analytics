@@ -83,7 +83,7 @@ const setUpSocket = async (server) => {
                 data: event.data,
                 page: event.page,
             });
-            console.log("returning from server");
+            console.log("returning from server", client.id);
             return { statusCode: 202 }
         });
 
