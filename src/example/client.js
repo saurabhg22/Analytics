@@ -9,7 +9,10 @@ socket.on('connect', () => {
 });
 
 
-
 socket.on('disconnect', () => {
     console.log("disconnected")
 });
+
+socket.on('error', (error) => {
+    console.log("error", error)
+})

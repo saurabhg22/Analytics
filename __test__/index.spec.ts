@@ -1,11 +1,12 @@
 import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
 import express from 'express';
+import { ObjectId } from 'mongodb';
 import io from 'socket.io-client';
 import { init, createEvent, getMongoClient } from '../src/index';
 
-chai.use(chaiAsPromised);
 const expect = chai.expect;
+
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 let server, db;
 before(async () => {
@@ -20,11 +21,84 @@ before(async () => {
 
 describe('createEvent', function () {
     it('should pass', async () => {
-        return expect(createEvent('testevent', {})).to.be.fulfilled;
+        const createdAnalyticEventId = await createEvent('testevent', { data: { testData: "1234" } });
+        expect(createdAnalyticEventId).to.exist;
+        expect(createdAnalyticEventId).to.be.string;
+        const analyticEvent = await db.collection('AnalyticEvent').findOne({
+            name: 'testevent',
+            'data.testData': '1234',
+            _id: new ObjectId(createdAnalyticEventId)
+        });
+        expect(analyticEvent).to.exist;
     });
 });
 
-describe('socket', () => {
+describe('socket-connected event', () => {
+    let socket;
+    it(`should create event for socket-connected`, (done) => {
+        socket = io.connect('http://localhost:3000', {
+            reconnection: false,
+        });
+        socket.on('connect', async () => {
+            try {
+                const analyticEvent = await db.collection('AnalyticEvent').findOne({
+                    clientId: socket.id,
+                    name: 'socket-connected',
+                });
+                expect(analyticEvent).to.exist;
+                done();
+            } catch (error) {
+                done(error)
+            }
+        });
+    });
+    afterEach((done) => {
+        if (socket.connected) {
+            socket.disconnect();
+        }
+        done();
+    });
+});
+
+
+describe('socket-disconnected event', () => {
+    let socket;
+    beforeEach((done) => {
+        socket = io.connect('http://localhost:3000', {
+            reconnection: false,
+        });
+        socket.on('connect', async () => {
+            done();
+        });
+    });
+    it(`should create event for socket-disconnected`, (done) => {
+        const socketId = socket.id;
+        socket.on('disconnect', async () => {
+            try {
+                await wait(10);
+                const analyticEvent = await db.collection('AnalyticEvent').findOne({
+                    clientId: socketId,
+                    name: 'socket-disconnected',
+                });
+                expect(analyticEvent).to.exist;
+                done();
+            } catch (error) {
+                done(error)
+            }
+        });
+
+        socket.disconnect();
+    });
+    afterEach((done) => {
+        if (socket.connected) {
+            socket.disconnect();
+        }
+        done();
+    });
+});
+
+
+describe('socket events', () => {
     let socket;
 
     beforeEach((done) => {
@@ -36,29 +110,32 @@ describe('socket', () => {
         });
     });
 
-    it(`should create event 'socketEvent'`, (done) => {
-        socket.emit('createEvent', { name: 'socketEvent', data: { email: "test@email.com" } }, () => {
-            done();
+
+    it(`should create event socketEvent`, (done) => {
+        socket.emit('createEvent', { name: 'socketEvent', data: { email: "test@gmail.com" } }, async () => {
+            try {
+                const analyticEvent = await db.collection('AnalyticEvent').findOne({
+                    clientId: socket.id,
+                    name: 'socketEvent',
+                    "data.email": "test@gmail.com"
+                });
+                expect(analyticEvent).to.exist;
+                done();
+            } catch (error) {
+                done(error)
+            }
+
         });
     });
 
     afterEach((done) => {
-        console.log('afterEach');
         if (socket.connected) {
             socket.disconnect();
         }
         done();
     });
 });
-// describe('disConnectSocket', function () {
-//     it('should pass', async () => {
-//         const socket = io('http://localhost:3000');
-//         socket.on('connect', () => {
-//             console.log('s', socket.id);
-//             socket.disconnect();
-//         });
-//     });
-// });
+
 
 after(async () => {
     const mongoClient = await getMongoClient();

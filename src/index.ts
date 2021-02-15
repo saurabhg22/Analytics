@@ -66,7 +66,7 @@ const setUpSocket = async (server) => {
             console.log(error);
         }
 
-        client.on('createEvent', async (event: Partial<TEvent>) => {
+        client.on('createEvent', async (event: Partial<TEvent>, ackFn) => {
             const handshake: any = client.handshake || {};
             const headers = handshake.headers || {};
             await createEvent(event.name, {
@@ -83,8 +83,7 @@ const setUpSocket = async (server) => {
                 data: event.data,
                 page: event.page,
             });
-            console.log("returning from server", client.id);
-            return { statusCode: 202 }
+            return ackFn({ statusCode: 202 });
         });
 
         client.on('disconnect', async () => {
@@ -134,9 +133,10 @@ export const createEvent = async (
         return Promise.reject('name is required');
     }
     const db = await getDB();
-    db.collection('AnalyticEvent').insertOne({
+    const insertAck = await db.collection('AnalyticEvent').insertOne({
         name,
         ...event,
         created: new Date(),
     });
+    return insertAck.insertedId;
 };
