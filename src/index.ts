@@ -1,7 +1,7 @@
 'use strict';
 
 import { ObjectId, MongoClient, Db } from 'mongodb';
-import SocketIO, { Socket } from 'socket.io';
+import SocketIO from 'socket.io';
 
 let db: Db, mongoClient: MongoClient;
 export type TEvent = {
@@ -21,9 +21,9 @@ export type TEvent = {
     };
 };
 export const init = async (
-    config?: { MONGO_URI?: string; setupSocket?: boolean },
+    config?: { MONGO_URI?: string; setupSocket?: boolean; PORT?: number },
     server?
-): Promise<Db> => {
+): Promise<{ db: Db; io: SocketIO.Server }> => {
     const MONGO_URI = config?.MONGO_URI ?? process.env.MONGO_URI;
     await new Promise<void>((resolve, reject) => {
         MongoClient.connect(
@@ -41,14 +41,19 @@ export const init = async (
             }
         );
     });
+    let io: SocketIO.Server;
     if (config?.setupSocket) {
-        await setUpSocket(server);
+        io = await setUpSocket(server || config.PORT);
     }
-    return db;
+    return { db, io };
 };
 
-const setUpSocket = async (server?) => {
-    const io = SocketIO(server);
+const setUpSocket = async (
+    serverOrPort: import('http').Server | import('https').Server | number
+) => {
+    const io = SocketIO(
+        serverOrPort as import('http').Server | import('https').Server
+    );
     io.sockets.on('connection', async (client) => {
         try {
             const handshake: any = client.handshake || {};
@@ -119,6 +124,7 @@ const setUpSocket = async (server?) => {
             await createEvent('socket-disconnected', disconnectEvent);
         });
     });
+    return io;
 };
 
 export const getDB = async (): Promise<Db> => {

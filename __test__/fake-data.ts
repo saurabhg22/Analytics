@@ -1,4 +1,4 @@
-import faker, { fake } from 'faker';
+import faker from 'faker';
 import { ObjectId } from 'mongodb';
 import { TEvent, generateClientId, init, getMongoClient } from '../src/index';
 
@@ -33,7 +33,7 @@ export const withEvent = (event?: Partial<TEvent>) => {
 };
 
 const withSessionEvents = async () => {
-    const db = await init({
+    const { db } = await init({
         MONGO_URI: 'mongodb://localhost:27017/analytictestdb',
     });
     await db.collection('AnalyticEvent').deleteMany({});

@@ -1,5 +1,4 @@
 import chai from 'chai';
-import express from 'express';
 import { ObjectId } from 'mongodb';
 import io from 'socket.io-client';
 import { init, createEvent, getMongoClient } from '../src/index';
@@ -10,17 +9,16 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let server, db;
 before(async () => {
-    const app = express();
-
-    server = app.listen(3000);
-
-    db = await init(
+    const initResp = await init(
         {
             MONGO_URI: 'mongodb://localhost:27017/analytictestdb',
             setupSocket: true,
-        },
-        server
+            PORT: 3000,
+        }
+        // server
     );
+    db = initResp.db;
+    server = initResp.io;
 });
 
 describe('createEvent', function () {
@@ -82,7 +80,7 @@ describe('socket-disconnected event', () => {
         const socketId = socket.id;
         socket.on('disconnect', async () => {
             try {
-                await wait(10);
+                await wait(50);
                 const analyticEvent = await db
                     .collection('AnalyticEvent')
                     .findOne({
