@@ -39,24 +39,24 @@ const withSessionEvents = async () => {
     await db.collection('AnalyticEvent').deleteMany({});
 
     const TOTAL_EVENTS = 1;
-    const TOTAL_USERS = 500;
+    const TOTAL_USERS = 5;
     const users = new Array(TOTAL_USERS).fill(0).map(() => ({
         id: new ObjectId(),
-        clientIds: new Array(faker.random.number(20))
+        clientIds: new Array(faker.random.number(2))
             .fill(0)
             .map(() => generateClientId()),
     }));
 
     for (let eventIndex = 0; eventIndex < TOTAL_EVENTS; eventIndex++) {
         const eventId = new ObjectId();
-        const TOTAL_SESSIONS = faker.random.number(10);
+        const TOTAL_SESSIONS = faker.random.number(1);
         for (
             let sessionIndex = 0;
             sessionIndex < TOTAL_SESSIONS;
             sessionIndex++
         ) {
             const sessionId = new ObjectId();
-            const TOTAL_CLIENTS = faker.random.number(1000);
+            const TOTAL_CLIENTS = faker.random.number(10);
             for (
                 let clientIndex = 0;
                 clientIndex < TOTAL_CLIENTS;
