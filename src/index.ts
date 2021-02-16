@@ -41,13 +41,13 @@ export const init = async (
             }
         );
     });
-    if (server && config?.setupSocket) {
+    if (config?.setupSocket) {
         await setUpSocket(server);
     }
     return db;
 };
 
-const setUpSocket = async (server) => {
+const setUpSocket = async (server?) => {
     const io = SocketIO(server);
     io.sockets.on('connection', async (client) => {
         try {

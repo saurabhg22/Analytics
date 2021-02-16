@@ -34,7 +34,7 @@ export const withEvent = (event?: Partial<TEvent>) => {
 
 const withSessionEvents = async () => {
     const db = await init({
-        MONGO_URI: 'mongodb://localhost:27017/eventtoollocal',
+        MONGO_URI: 'mongodb://localhost:27017/analytictestdb',
     });
     await db.collection('AnalyticEvent').deleteMany({});
 

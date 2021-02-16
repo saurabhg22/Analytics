@@ -16,7 +16,7 @@ before(async () => {
 
     db = await init(
         {
-            MONGO_URI: 'mongodb://localhost:27017/eventtoollocal',
+            MONGO_URI: 'mongodb://localhost:27017/analytictestdb',
             setupSocket: true,
         },
         server
