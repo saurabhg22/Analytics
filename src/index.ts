@@ -22,7 +22,7 @@ export type TEvent = {
 };
 export const init = async (
     config?: { MONGO_URI?: string; setupSocket?: boolean; PORT?: number },
-    server?
+    io?
 ): Promise<{ db: Db; io: SocketIO.Server }> => {
     const MONGO_URI = config?.MONGO_URI ?? process.env.MONGO_URI;
     await new Promise<void>((resolve, reject) => {
@@ -41,19 +41,16 @@ export const init = async (
             }
         );
     });
-    let io: SocketIO.Server;
+
     if (config?.setupSocket) {
-        io = await setUpSocket(server || config.PORT);
+        io = await setUpSocket(io, config.PORT);
     }
     return { db, io };
 };
 
-const setUpSocket = async (
-    serverOrPort: import('http').Server | import('https').Server | number
-) => {
-    const io = SocketIO(
-        serverOrPort as import('http').Server | import('https').Server
-    );
+const setUpSocket = async (io, port: number = 3000) => {
+    io = io || SocketIO(port);
+
     io.sockets.on('connection', async (client) => {
         try {
             const handshake: any = client.handshake || {};
