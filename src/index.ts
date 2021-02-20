@@ -9,7 +9,7 @@ export type TEvent = {
     sentTime?: Date;
     receivedTime?: Date;
     created: Date;
-    userId?: ObjectId;
+    userId?: ObjectId | string;
     page?: string;
     data: Record<string, any>;
     clientId: string;
@@ -155,10 +155,33 @@ export const createEvent = async (
     const db = await getDB();
 
     delete (event as any)._id;
+    const data = event.data || {};
+    for (let key in data) {
+        if (isValidObjectIdId(data[key])) {
+            data[key] = convertToObjectId(data[key]);
+        }
+    }
     const insertAck = await db.collection('AnalyticEvent').insertOne({
         ...event,
         name,
-        created: new Date(),
+        userId: event.userId ? convertToObjectId(event.userId) : undefined,
+        data,
     });
     return insertAck.insertedId;
+};
+
+const isValidObjectIdId = (id: string) => {
+    if (typeof id !== 'string') return false;
+    try {
+        return new ObjectId(id).toString() === id;
+    } catch (error) {
+        return false;
+    }
+};
+
+const convertToObjectId = (id: string | ObjectId) => {
+    id = id.toString();
+    if (!isValidObjectIdId(id))
+        throw new Error(`${id} is not a valid ObjectId`);
+    return new ObjectId(id);
 };

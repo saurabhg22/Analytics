@@ -24,14 +24,17 @@ before(async () => {
 describe('createEvent', function () {
     it('should pass', async () => {
         const createdAnalyticEventId = await createEvent('testevent', {
-            data: { testData: '1234' },
+            data: { testData: '1234', testId: '6030d6aff9c62c091440e711' },
+            userId: '6030d709f9c62c091440e712',
         });
         expect(createdAnalyticEventId).to.exist;
         expect(createdAnalyticEventId).to.be.string;
         const analyticEvent = await db.collection('AnalyticEvent').findOne({
             name: 'testevent',
             'data.testData': '1234',
+            'data.testId': new ObjectId('6030d6aff9c62c091440e711'),
             _id: new ObjectId(createdAnalyticEventId),
+            userId: new ObjectId('6030d709f9c62c091440e712'),
         });
         expect(analyticEvent).to.exist;
     });
