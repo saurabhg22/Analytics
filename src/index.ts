@@ -109,6 +109,7 @@ const setUpSocket = async (io, port: number = 3000) => {
 
             const disconnectEvent = {
                 ...(lastClientEvent || {}),
+                sentTime: new Date(),
                 clientId: client.id,
                 receivedTime: new Date(),
                 context: {

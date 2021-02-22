@@ -34,22 +34,22 @@ export const withEvent = (event?: Partial<TEvent>) => {
 
 const withSessionEvents = async () => {
     const { db } = await init({
-        MONGO_URI: 'mongodb://localhost:27017/analytictestdb',
+        MONGO_URI: 'mongodb://localhost:27017/analyticdblocal',
     });
     await db.collection('AnalyticEvent').deleteMany({});
 
     const TOTAL_EVENTS = 1;
-    const TOTAL_USERS = 5;
+    const TOTAL_USERS = 20;
     const users = new Array(TOTAL_USERS).fill(0).map(() => ({
         id: new ObjectId(),
-        clientIds: new Array(faker.random.number(2))
+        clientIds: new Array(faker.random.number(5))
             .fill(0)
             .map(() => generateClientId()),
     }));
 
     for (let eventIndex = 0; eventIndex < TOTAL_EVENTS; eventIndex++) {
         const eventId = new ObjectId();
-        const TOTAL_SESSIONS = faker.random.number(1);
+        const TOTAL_SESSIONS = faker.random.number(5);
         for (
             let sessionIndex = 0;
             sessionIndex < TOTAL_SESSIONS;
