@@ -122,7 +122,14 @@ describe('socket events', () => {
     it(`should create event socketEvent`, (done) => {
         socket.emit(
             'createEvent',
-            { name: 'socketEvent', data: { email: 'test@gmail.com' } },
+            {
+                name: 'socketEvent',
+                data: {
+                    email: 'test@gmail.com',
+                    testId: '6030d6aff9c62c091440e711',
+                },
+                userId: '6030d709f9c62c091440e712',
+            },
             async () => {
                 try {
                     const analyticEvent = await db
@@ -131,6 +138,10 @@ describe('socket events', () => {
                             clientId: socket.id,
                             name: 'socketEvent',
                             'data.email': 'test@gmail.com',
+                            'data.testId': new ObjectId(
+                                '6030d6aff9c62c091440e711'
+                            ),
+                            userId: new ObjectId('6030d709f9c62c091440e712'),
                         });
                     expect(analyticEvent).to.exist;
                     done();

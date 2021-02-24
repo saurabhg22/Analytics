@@ -158,7 +158,7 @@ export const createEvent = async (
     delete (event as any)._id;
     const data = event.data || {};
     for (let key in data) {
-        if (isValidObjectIdId(data[key])) {
+        if (isValidObjectId(data[key])) {
             data[key] = convertToObjectId(data[key]);
         }
     }
@@ -171,7 +171,7 @@ export const createEvent = async (
     return insertAck.insertedId;
 };
 
-const isValidObjectIdId = (id: string) => {
+const isValidObjectId = (id: string) => {
     if (typeof id !== 'string') return false;
     try {
         return new ObjectId(id).toString() === id;
@@ -182,7 +182,6 @@ const isValidObjectIdId = (id: string) => {
 
 const convertToObjectId = (id: string | ObjectId) => {
     id = id.toString();
-    if (!isValidObjectIdId(id))
-        throw new Error(`${id} is not a valid ObjectId`);
+    if (!isValidObjectId(id)) throw new Error(`${id} is not a valid ObjectId`);
     return new ObjectId(id);
 };
