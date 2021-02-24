@@ -99,7 +99,7 @@ const setUpSocket = async (io, port: number = 3000) => {
                     .find({
                         clientId: client.id,
                     })
-                    .sort({ created: -1 })
+                    .sort({ sentTime: -1 })
                     .limit(1)
                     .toArray()
             )[0];
@@ -167,6 +167,7 @@ export const createEvent = async (
         name,
         userId: event.userId ? convertToObjectId(event.userId) : undefined,
         data,
+        created: new Date(),
     });
     return insertAck.insertedId;
 };
