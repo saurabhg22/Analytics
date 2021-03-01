@@ -98,6 +98,7 @@ const setUpSocket = async (io, port: number = 3000) => {
                     .collection('AnalyticEvent')
                     .find({
                         clientId: client.id,
+                        name: { $ne: 'socket-connected' },
                     })
                     .sort({ sentTime: -1 })
                     .limit(1)
