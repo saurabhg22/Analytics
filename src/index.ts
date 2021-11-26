@@ -73,10 +73,20 @@ const setUpSocket = async (io, port: number = 3000) => {
         client.on('createEvent', async (event: Partial<TEvent>, ackFn) => {
             const handshake: any = client.handshake || {};
             const headers = handshake.headers || {};
+            const receivedTime = new Date();
+            let sentTime = event.sentTime;
+            if (sentTime) {
+                if (typeof sentTime === 'string') {
+                    sentTime = new Date(sentTime);
+                }
+                if (receivedTime < sentTime) {
+                    sentTime = receivedTime;
+                }
+            }
             await createEvent(event.name, {
                 clientId: client.id,
-                sentTime: event.sentTime ? new Date(event.sentTime) : undefined,
-                receivedTime: new Date(),
+                sentTime,
+                receivedTime,
                 context: {
                     'user-agent': headers['user-agent'],
                     ip: handshake.address,
