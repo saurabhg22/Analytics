@@ -50,7 +50,7 @@ export const init = async (
 
 const setUpSocket = async (io, port: number = 3000) => {
     io = io || SocketIO(port);
-
+    await disconnectConnectedClients();
     io.sockets.on('connection', async (client) => {
         try {
             const handshake: any = client.handshake || {};
@@ -198,4 +198,54 @@ const convertToObjectId = (id: string | ObjectId) => {
     id = id.toString();
     if (!isValidObjectId(id)) throw new Error(`${id} is not a valid ObjectId`);
     return new ObjectId(id);
+};
+
+const disconnectConnectedClients = async () => {
+    const db = await getDB();
+    const connectEvents = await db
+        .collection('AnalyticEvent')
+        .find({
+            name: 'socket-connected',
+            sentTime: {
+                $gte: new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 7), // 7 days
+            },
+        })
+        .toArray();
+
+    for (let connectEvent of connectEvents) {
+        const clientId = connectEvent.clientId;
+        let disconnectEvent = await db.collection('AnalyticEvent').findOne({
+            name: 'socket-disconnected',
+            clientId,
+            sentTime: {
+                $gte: connectEvent.sentTime,
+            },
+        });
+        if (disconnectEvent) continue;
+
+        const lastClientEvent = (
+            await db
+                .collection('AnalyticEvent')
+                .find({
+                    clientId,
+                    name: {
+                        $nin: ['socket-connected', 'socket-disconnected'],
+                    },
+                })
+                .sort({ sentTime: -1 })
+                .limit(1)
+                .toArray()
+        )[0];
+        if (lastClientEvent) {
+            delete lastClientEvent._id;
+        }
+        disconnectEvent = {
+            ...(lastClientEvent || {}),
+            sentTime: new Date(),
+            clientId,
+            receivedTime: new Date(),
+            context: {},
+        };
+        await createEvent('socket-disconnected', disconnectEvent);
+    }
 };
